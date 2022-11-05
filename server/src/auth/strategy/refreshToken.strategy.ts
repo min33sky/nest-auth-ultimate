@@ -15,15 +15,27 @@ export class RefreshTokenStrategy extends PassportStrategy(
 ) {
   constructor() {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        RefreshTokenStrategy.extractJWT,
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       secretOrKey: 'rt-secret',
       ignoreExpiration: false,
       passReqToCallback: true, //? DB의 refresh token과 비교하기 위해 추가 (아래 validate 메서드에서 사용)
     });
   }
 
+  private static extractJWT(req: Request): string | null {
+    if (req.cookies && 'refresh_token' in req.cookies) {
+      return req.cookies.refresh_token;
+    }
+    return null;
+  }
+
   async validate(request: Request, payload: any) {
-    const refreshToken = request.get('Authorization')?.split(' ')[1];
+    const refreshToken =
+      request.cookies.refresh_token ||
+      request.get('Authorization')?.split(' ')[1];
 
     if (!refreshToken) throw new ForbiddenException('Refresh token malformed');
 

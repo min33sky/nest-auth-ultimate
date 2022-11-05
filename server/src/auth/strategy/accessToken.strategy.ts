@@ -30,8 +30,7 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
     return null;
   }
 
-  async validate(req, payload: JwtPayload) {
-    console.log('ats ------ Payload: ', payload);
+  async validate(payload: JwtPayload) {
     return payload; //? 이 payload는 req.user에 저장됨
   }
 }
