@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -24,7 +24,9 @@ export class RefreshTokenStrategy extends PassportStrategy(
 
   async validate(request: Request, payload: any) {
     const refreshToken = request.get('Authorization')?.split(' ')[1];
-    console.log('### refreshToken: ', refreshToken);
+
+    if (!refreshToken) throw new ForbiddenException('Refresh token malformed');
+
     return {
       ...payload,
       refreshToken,

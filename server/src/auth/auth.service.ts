@@ -4,27 +4,45 @@ import { AuthDto } from './dto/auth.dto';
 import * as bcrypt from 'bcryptjs';
 import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService, private jwtService: JwtService) {}
 
+  /**
+   * 로컬 회원가입
+   */
   async signupLocal({ email, password }: AuthDto): Promise<Tokens> {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = await this.prisma.user.create({
-      data: {
-        email,
-        hashedPassword,
-      },
-    });
+    try {
+      const newUser = await this.prisma.user.create({
+        data: {
+          email,
+          hashedPassword,
+        },
+      });
 
-    const tokens = await this.getTokens(newUser.id, newUser.email);
-    await this.updateRefreshToken(newUser.id, tokens.refreshToken);
+      const tokens = await this.getTokens(newUser.id, newUser.email);
+      await this.updateRefreshToken(newUser.id, tokens.refreshToken);
 
-    return tokens;
+      return tokens;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ForbiddenException('이미 존재하는 이메일입니다.');
+        } else {
+          throw new ForbiddenException('회원가입에 실패했습니다.');
+        }
+      }
+      throw new Error(error.message);
+    }
   }
 
+  /**
+   * 로컬 로그인
+   */
   async signinLocal({ email, password }: AuthDto): Promise<Tokens> {
     const user = await this.prisma.user.findUnique({
       where: {
@@ -48,6 +66,10 @@ export class AuthService {
     return tokens;
   }
 
+  /**
+   * 로그아웃
+   * @param userId
+   */
   async logout(userId: number) {
     //? Spam 요청에 대한 대비
     await this.prisma.user.updateMany({
@@ -99,6 +121,11 @@ export class AuthService {
     return tokens;
   }
 
+  /**
+   * 유저 DB에 refreshToken 저장
+   * @param userId
+   * @param refreshToken
+   */
   async updateRefreshToken(userId: number, refreshToken: string) {
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
     await this.prisma.user.update({
