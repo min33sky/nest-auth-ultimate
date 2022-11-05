@@ -64,8 +64,39 @@ export class AuthService {
     return 'logout';
   }
 
-  async refreshToken() {
-    return 'refresh token';
+  /**
+   * 토큰 재발급
+   * @param userId
+   * @param refreshToken
+   * @returns
+   */
+  async refreshToken(userId: number, refreshToken: string) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id: userId,
+        hashedRefreshToken: {
+          not: null, //? 로그아웃을 한 경우 hashedRefreshToken이 null이 됨
+        },
+      },
+    });
+
+    if (!user) {
+      throw new ForbiddenException('Access Denied!');
+    }
+
+    const isRefreshTokenValid = await bcrypt.compare(
+      refreshToken,
+      user.hashedRefreshToken,
+    );
+
+    if (!isRefreshTokenValid) {
+      throw new ForbiddenException('Access Denied!');
+    }
+
+    const tokens = await this.getTokens(user.id, user.email);
+    await this.updateRefreshToken(user.id, tokens.refreshToken);
+
+    return tokens;
   }
 
   async updateRefreshToken(userId: number, refreshToken: string) {
@@ -80,6 +111,12 @@ export class AuthService {
     });
   }
 
+  /**
+   * 토큰 발급
+   * @param userId
+   * @param email
+   * @returns
+   */
   async getTokens(userId: number, email: string): Promise<Tokens> {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(

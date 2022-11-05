@@ -12,6 +12,7 @@ import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
 import { JwtPayload } from './strategy/accesstoken.strategy';
+import { JwtRefreshPayload } from './strategy/refreshToken.strategy';
 import { Tokens } from './types';
 
 @Controller('auth')
@@ -41,7 +42,9 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt-refresh'))
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  refreshToken() {
-    return 'refresh token';
+  refreshToken(@Req() req: Request) {
+    console.log('req.user: ', req.user);
+    const user = req.user as JwtRefreshPayload;
+    return this.authService.refreshToken(user.sub, user.refreshToken);
   }
 }
