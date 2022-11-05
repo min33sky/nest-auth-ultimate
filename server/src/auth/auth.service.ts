@@ -48,7 +48,19 @@ export class AuthService {
     return tokens;
   }
 
-  async logout() {
+  async logout(userId: number) {
+    //? Spam 요청에 대한 대비
+    await this.prisma.user.updateMany({
+      where: {
+        id: userId,
+        hashedRefreshToken: {
+          not: null,
+        },
+      },
+      data: {
+        hashedRefreshToken: null,
+      },
+    });
     return 'logout';
   }
 
