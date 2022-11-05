@@ -4,11 +4,12 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { CurrentUser } from 'src/common/decorators/currentUser.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
-import { AccessTokenGuard } from 'src/common/guards/accessToken.guard';
 import { RefreshTokenGuard } from 'src/common/guards/refreshToken.guard';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
@@ -21,18 +22,59 @@ export class AuthController {
   @Public()
   @Post('local/signup')
   @HttpCode(HttpStatus.CREATED)
-  signUpLocal(@Body() authDto: AuthDto): Promise<Tokens> {
-    return this.authService.signupLocal(authDto);
+  async signUpLocal(
+    @Body() authDto: AuthDto,
+    @Res({
+      passthrough: true,
+    })
+    res: Response,
+  ) {
+    const { accessToken, refreshToken } = await this.authService.signupLocal(
+      authDto,
+    );
+
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+    });
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+    };
   }
 
   @Public()
   @Post('local/signin')
   @HttpCode(HttpStatus.OK)
-  signInLocal(@Body() authDto: AuthDto): Promise<Tokens> {
-    return this.authService.signinLocal(authDto);
+  async signInLocal(
+    @Body() authDto: AuthDto,
+    @Res({
+      passthrough: true,
+    })
+    res: Response,
+  ) {
+    const { accessToken, refreshToken } = await this.authService.signinLocal(
+      authDto,
+    );
+
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+    });
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+    };
   }
 
-  @UseGuards(AccessTokenGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   logout(@CurrentUser('sub') userId: number) {

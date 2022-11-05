@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Request } from 'express';
 
 export type JwtPayload = {
   sub: number;
@@ -13,14 +14,24 @@ export type JwtPayload = {
 export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor() {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        AccessTokenStrategy.extractJWT,
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       secretOrKey: 'at-secret',
-      ignoreExpiration: false,
+      ignoreExpiration: false, // false 설정 시 Passport에 검증을 위임
     });
   }
 
-  async validate(payload: JwtPayload) {
-    console.log('Payload: ', payload);
+  private static extractJWT(req: Request): string | null {
+    if (req.cookies && 'access_token' in req.cookies) {
+      return req.cookies.access_token;
+    }
+    return null;
+  }
+
+  async validate(req, payload: JwtPayload) {
+    console.log('ats ------ Payload: ', payload);
     return payload; //? 이 payload는 req.user에 저장됨
   }
 }
