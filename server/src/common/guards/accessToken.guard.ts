@@ -8,6 +8,7 @@ export class AccessTokenGuard extends AuthGuard('jwt') {
     super();
   }
 
+  //* AccessTokenStrategy.validate()에서 리턴한 값들이 인자로 들어옴
   handleRequest(err, user, info) {
     if (err || !user) {
       //? 토큰 만료

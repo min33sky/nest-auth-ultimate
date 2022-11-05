@@ -15,11 +15,11 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor() {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        AccessTokenStrategy.extractJWT,
-        ExtractJwt.fromAuthHeaderAsBearerToken(),
+        AccessTokenStrategy.extractJWT, //? 쿠키에서 토큰 추출
+        ExtractJwt.fromAuthHeaderAsBearerToken(), //? 헤더에서 토큰 추출
       ]),
       secretOrKey: 'at-secret',
-      ignoreExpiration: false, // false 설정 시 Passport에 검증을 위임
+      ignoreExpiration: false, //? false 설정 시 Passport에 검증을 위임
     });
   }
 
@@ -30,6 +30,7 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
     return null;
   }
 
+  //* validate() 메서드는 토큰 검증이 성공하면 호출됨
   async validate(payload: JwtPayload) {
     return payload; //? 이 payload는 req.user에 저장됨
   }

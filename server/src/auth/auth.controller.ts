@@ -13,7 +13,6 @@ import { Public } from 'src/common/decorators/public.decorator';
 import { RefreshTokenGuard } from 'src/common/guards/refreshToken.guard';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
-import { Tokens } from './types';
 
 @Controller('auth')
 export class AuthController {
