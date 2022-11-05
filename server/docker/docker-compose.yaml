@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  postgres:
+    container_name: nest-auth-ultimate
+    image: postgres:14.5
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-min33sky}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qwe123}
+      POSTGRES_DB: ${POSTGRES_DB:-nest-auth-ultimate}
+    volumes:
+      - postgres:/var/lib/data/postgres
+    ports:
+      - '5432:5432'
+    restart: unless-stopped
+
+volumes:
+  postgres:
+    name: nest-auth-ultimate
